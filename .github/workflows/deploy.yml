@@ -12,8 +12,9 @@ jobs:
 
     steps:
 
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
+
 
       - name: Setup SSH
         run: |
@@ -22,25 +23,33 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to EC2
+
+      - name: Deploy Application
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
 
-          cd ~/ci-cd_demo
+          echo 'Connected to EC2'
 
-          git pull origin main
+          cd ~/ci-cd_demo &&
 
-          cd backend
-          npm install
-          pm2 restart backend
+          echo 'Pulling latest code' &&
+          git pull origin main &&
 
-          cd ../frontend
-          npm install
-          npm run build
+          echo 'Installing backend dependencies' &&
+          cd backend &&
+          npm install &&
+          pm2 restart backend &&
 
-          sudo rm -rf /var/www/html/*
-          sudo cp -r dist/* /var/www/html/
+          echo 'Building frontend' &&
+          cd ../frontend &&
+          npm install &&
+          npm run build &&
 
+          echo 'Updating nginx files' &&
+          sudo rm -rf /var/www/html/* &&
+          sudo cp -r dist/* /var/www/html/ &&
+
+          echo 'Restarting nginx' &&
           sudo systemctl restart nginx
 
-          EOF
+          "
