@@ -16,7 +16,7 @@ function App() {
 
   return (
     <>
-      <h1>Fullstack Deployment Project</h1>
+      <h1>CI/CD test project</h1>
       <h2>{msg}</h2>
     </>
   )
