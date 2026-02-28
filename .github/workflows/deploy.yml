@@ -26,30 +26,24 @@ jobs:
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
 
-          echo 'Connected to EC2'
+            cd ~/ci-cd_demo &&
 
-          cd ~/ci-cd_demo &&
+            git fetch origin main &&
+            git reset --hard origin/main &&
 
-          echo 'Pulling latest code' &&
-          git pull origin main &&
+            cd backend &&
+            npm install &&
+            pm2 restart backend &&
 
-          echo 'Installing backend dependencies' &&
-          cd backend &&
-          npm install &&
-          pm2 restart backend &&
+            cd ../frontend &&
+            npm install &&
+            npm run build &&
 
-          echo 'Building frontend' &&
-          cd ../frontend &&
-          npm install &&
-          npm run build &&
+            sudo rm -rf /var/www/html/* &&
+            sudo cp -r dist/* /var/www/html/ &&
 
-          echo 'Updating nginx files' &&
-          sudo rm -rf /var/www/html/* &&
-          sudo cp -r dist/* /var/www/html/ &&
+            sudo systemctl restart nginx
 
-          echo 'Restarting nginx' &&
-          sudo systemctl restart nginx
-
-          "
+            "
